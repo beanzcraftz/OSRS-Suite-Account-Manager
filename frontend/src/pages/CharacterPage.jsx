@@ -27,16 +27,28 @@ function xpForLevel(level) {
   return Math.floor(xp / 4);
 }
 
-export function ProgressBar({ current, target }) {
+export function ProgressBar({ start, current, target }) {
+  const startXP = start ? xpForLevel(start) : 0;
   const currentXP = xpForLevel(current);
   const targetXP = xpForLevel(target);
-  const pct = targetXP > 0 ? Math.min(100, Math.round((currentXP / targetXP) * 100)) : 0;
+  
+  let pct = 0;
+  if (targetXP > startXP) {
+    pct = Math.min(100, Math.max(0, ((currentXP - startXP) / (targetXP - startXP)) * 100));
+  } else if (targetXP > 0) {
+    pct = Math.min(100, Math.round((currentXP / targetXP) * 100));
+  }
+  
   return (
     <div className="mt-1">
-      <div className="h-2 bg-gray-800 rounded-full overflow-hidden">
-        <div className="h-full bg-gradient-to-r from-amber-500 to-amber-400 rounded-full transition-all" style={{ width: `${pct}%` }} />
+      <div className="w-full bg-gray-800 rounded-full h-1.5 border border-gray-700">
+        <div className="bg-amber-500 h-1.5 rounded-full transition-all" style={{ width: `${pct}%` }}></div>
       </div>
-      <p className="text-xs text-gray-500 mt-1">{pct}% to level {target}</p>
+      <div className="flex justify-between mt-1 text-[10px] text-gray-500">
+        <span>{start ? start : 1}</span>
+        <span>{Math.round(pct)}%</span>
+        <span>{target}</span>
+      </div>
     </div>
   );
 }
@@ -352,7 +364,7 @@ export default function CharacterPage() {
                           className="text-xs text-red-400/60 hover:text-red-400 transition-colors">✕</button>
                       </div>
                     </div>
-                    <ProgressBar current={editForm[goal.skill] ?? goal.current_level} target={goal.target_level} />
+                    <ProgressBar start={goal.current_level} current={editForm[goal.skill] ?? goal.current_level} target={goal.target_level} />
                   </div>
                 ))}
                 

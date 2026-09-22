@@ -4,7 +4,6 @@ import { useTimers } from '../context/TimerContext';
 
 const NAV = [
   { to: '/',           label: 'Dashboard',    emoji: '🏠' },
-  { to: '/flipper',    label: 'GE Flipper',   emoji: '⚔️' },
   { to: '/character',  label: 'Characters',   emoji: '📋' },
   { to: '/skiller',    label: 'Skiller',      emoji: '📊' },
   { to: '/quests',     label: 'Quests',       emoji: '📜' },

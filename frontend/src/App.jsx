@@ -3,7 +3,6 @@ import { CharacterProvider } from './context/CharacterContext';
 import { TimerProvider } from './context/TimerContext';
 import { SessionProvider, useSession } from './context/SessionContext';
 import Sidebar from './components/Sidebar';
-import FlipperPage from './pages/FlipperPage';
 import CharacterPage from './pages/CharacterPage';
 import SkillerPage from './pages/SkillerPage';
 import BoredPage from './pages/BoredPage';
@@ -49,7 +48,6 @@ export default function App() {
               <main className="flex-1 ml-56 p-6 max-w-full overflow-x-hidden">
               <Routes>
                 <Route path="/" element={<DashboardPage />} />
-                <Route path="/flipper" element={<FlipperPage />} />
                 <Route path="/character" element={<CharacterPage />} />
                 <Route path="/skiller" element={<SkillerPage />} />
                 <Route path="/bored" element={<BoredPage />} />

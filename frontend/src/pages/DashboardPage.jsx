@@ -3,15 +3,6 @@ import { useCharacter } from '../context/CharacterContext';
 import { useSession } from '../context/SessionContext';
 import { ProgressBar } from './CharacterPage';
 
-function Progress({ current, target }) {
-  const pct = Math.min(100, Math.max(0, (current / target) * 100));
-  return (
-    <div className="w-full bg-gray-800 rounded-full h-2 mt-2 border border-gray-700 overflow-hidden">
-      <div className="bg-amber-500 h-2 rounded-full transition-all" style={{ width: `${pct}%` }}></div>
-    </div>
-  );
-}
-
 const SKILL_ICONS = {
   attack: '⚔️', hitpoints: '❤️', mining: '⛏️', strength: '💪',
   agility: '🏃', smithing: '🔨', defence: '🛡️', herblore: '⚗️',
@@ -151,7 +142,7 @@ export default function DashboardPage() {
                       <span className="font-medium text-white capitalize">{SKILL_ICONS[goal.skill]} {goal.skill}</span>
                       <span className="text-gray-400">{goal.current_level} → <span className="text-amber-400 font-bold">{goal.target_level}</span></span>
                     </div>
-                    <Progress current={activeChar.skills[goal.skill] ?? goal.current_level} target={goal.target_level} />
+                    <ProgressBar start={goal.current_level} current={activeChar.skills[goal.skill] ?? goal.current_level} target={goal.target_level} />
                   </div>
                 ))
               ) : (
