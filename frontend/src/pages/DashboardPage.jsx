@@ -140,7 +140,9 @@ export default function DashboardPage() {
                   <div key={goal.id} className="bg-gray-950 p-4 rounded-lg border border-gray-800">
                     <div className="flex justify-between text-sm mb-1">
                       <span className="font-medium text-white capitalize">{SKILL_ICONS[goal.skill]} {goal.skill}</span>
-                      <span className="text-gray-400">{goal.current_level} → <span className="text-amber-400 font-bold">{goal.target_level}</span></span>
+                      <span className="text-gray-400">
+                        Lvl <span className="text-white font-bold">{activeChar.skills[goal.skill] ?? goal.current_level}</span> / {goal.target_level}
+                      </span>
                     </div>
                     <ProgressBar start={goal.current_level} current={activeChar.skills[goal.skill] ?? goal.current_level} target={goal.target_level} />
                   </div>

@@ -41,13 +41,12 @@ export function ProgressBar({ start, current, target }) {
   
   return (
     <div className="mt-1">
-      <div className="w-full bg-gray-800 rounded-full h-1.5 border border-gray-700">
+      <div className="w-full bg-gray-800 rounded-full h-1.5 border border-gray-700 overflow-hidden relative">
         <div className="bg-amber-500 h-1.5 rounded-full transition-all" style={{ width: `${pct}%` }}></div>
       </div>
       <div className="flex justify-between mt-1 text-[10px] text-gray-500">
-        <span>{start ? start : 1}</span>
-        <span>{Math.round(pct)}%</span>
-        <span>{target}</span>
+        <span>Goal Progress: {Math.round(pct)}%</span>
+        <span>{targetXP.toLocaleString()} XP</span>
       </div>
     </div>
   );
@@ -239,6 +238,11 @@ export default function CharacterPage() {
     await fetchCharacterDetail(selectedChar.id);
   };
 
+  const hasChanges = selectedChar ? (
+    ['name', 'combat_level', 'total_level', 'current_gp'].some(k => editForm[k] !== selectedChar[k]) ||
+    SKILLS.some(skill => editForm[skill] !== selectedChar.skills?.[skill])
+  ) : false;
+
   return (
     <div className="pb-16">
 
@@ -295,9 +299,11 @@ export default function CharacterPage() {
           <div className="xl:col-span-2 bg-gray-900/80 border border-gray-800 rounded-xl p-6">
             <div className="flex justify-between items-center mb-5">
               <h2 className="font-bold text-white text-lg">📊 Stats — {selectedChar.name}</h2>
-              <button onClick={handleSave} disabled={saving}
-                className="bg-amber-500 hover:bg-amber-400 disabled:opacity-50 text-black font-semibold px-4 py-1.5 rounded-lg text-sm transition-colors">
-                {saving ? 'Saving…' : 'Save Changes'}
+              <button onClick={handleSave} disabled={saving || (!hasChanges && !saving)}
+                className={`text-black font-semibold px-4 py-1.5 rounded-lg text-sm transition-colors ${
+                  hasChanges ? 'bg-emerald-500 hover:bg-emerald-400 shadow-[0_0_15px_rgba(16,185,129,0.5)] animate-pulse' : 'bg-amber-500 hover:bg-amber-400 disabled:opacity-50'
+                }`}>
+                {saving ? 'Saving…' : (hasChanges ? 'Save Changes!' : 'Save Changes')}
               </button>
             </div>
 
@@ -354,7 +360,7 @@ export default function CharacterPage() {
                           <button onClick={() => handleMoveGoal(index, 1)} className="text-gray-500 hover:text-white leading-none text-[10px]">▼</button>
                         </div>
                         <span className="text-sm font-medium text-white capitalize">
-                          {SKILL_ICONS[goal.skill]} {goal.skill} {goal.current_level} → {goal.target_level}
+                          {SKILL_ICONS[goal.skill]} {goal.skill} <span className="text-gray-400 font-normal">Lvl {editForm[goal.skill] ?? goal.current_level} / {goal.target_level}</span>
                         </span>
                       </div>
                       <div className="flex gap-2">
