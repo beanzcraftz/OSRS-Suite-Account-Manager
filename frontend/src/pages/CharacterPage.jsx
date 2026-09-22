@@ -87,6 +87,8 @@ export default function CharacterPage() {
   const [newGoal, setNewGoal] = useState({ skill: 'attack', current_level: 1, target_level: 10 });
   const [noteText, setNoteText] = useState('');
   const [saving, setSaving] = useState(false);
+  const [saved, setSaved] = useState(false);
+  const [editingGoal, setEditingGoal] = useState(null);
   const [createSlot, setCreateSlot] = useState(null);
   const [newName, setNewName] = useState('');
 
@@ -177,6 +179,8 @@ export default function CharacterPage() {
       }
       await fetchCharacterDetail(selectedChar.id);
       await refreshCharacters();
+      setSaved(true);
+      setTimeout(() => setSaved(false), 2000);
     } catch (e) {
       alert(`Network error: ${e.message}`);
     } finally {
@@ -195,7 +199,21 @@ export default function CharacterPage() {
   };
 
   const handleCompleteGoal = async (goalId, completed) => {
-    await fetch(`/api/characters/${selectedChar.id}/goals/${goalId}?completed=${!completed}`, { method: 'PUT' });
+    await fetch(`/api/characters/${selectedChar.id}/goals/${goalId}`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ completed: !completed })
+    });
+    await fetchCharacterDetail(selectedChar.id);
+  };
+
+  const handleSaveEditedGoal = async (goalId, updates) => {
+    await fetch(`/api/characters/${selectedChar.id}/goals/${goalId}`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(updates)
+    });
+    setEditingGoal(null);
     await fetchCharacterDetail(selectedChar.id);
   };
 
@@ -299,11 +317,12 @@ export default function CharacterPage() {
           <div className="xl:col-span-2 bg-gray-900/80 border border-gray-800 rounded-xl p-6">
             <div className="flex justify-between items-center mb-5">
               <h2 className="font-bold text-white text-lg">📊 Stats — {selectedChar.name}</h2>
-              <button onClick={handleSave} disabled={saving || (!hasChanges && !saving)}
+              <button onClick={handleSave} disabled={saving || (!hasChanges && !saving && !saved)}
                 className={`text-black font-semibold px-4 py-1.5 rounded-lg text-sm transition-colors ${
+                  saved ? 'bg-emerald-500' :
                   hasChanges ? 'bg-emerald-500 hover:bg-emerald-400 shadow-[0_0_15px_rgba(16,185,129,0.5)] animate-pulse' : 'bg-amber-500 hover:bg-amber-400 disabled:opacity-50'
                 }`}>
-                {saving ? 'Saving…' : (hasChanges ? 'Save Changes!' : 'Save Changes')}
+                {saving ? 'Saving…' : saved ? '✓ Saved!' : (hasChanges ? 'Save Changes!' : 'Save Changes')}
               </button>
             </div>
 
@@ -353,24 +372,40 @@ export default function CharacterPage() {
               <div className="overflow-y-auto flex-1 pr-2 space-y-4 min-h-[100px]">
                 {selectedChar.goals?.filter(g => !g.completed).map((goal, index) => (
                   <div key={goal.id}>
-                    <div className="flex justify-between items-center mb-1">
-                      <div className="flex items-center gap-2">
-                        <div className="flex flex-col">
-                          <button onClick={() => handleMoveGoal(index, -1)} className="text-gray-500 hover:text-white leading-none text-[10px]">▲</button>
-                          <button onClick={() => handleMoveGoal(index, 1)} className="text-gray-500 hover:text-white leading-none text-[10px]">▼</button>
+                    {editingGoal === goal.id ? (
+                      <div className="flex gap-2 items-center bg-gray-950 p-2 rounded">
+                        <span className="text-sm font-medium text-white capitalize w-20">{SKILL_ICONS[goal.skill]} {goal.skill}</span>
+                        <input type="number" id={`edit-target-${goal.id}`} defaultValue={goal.target_level} min="2" max="99"
+                          className="w-16 bg-gray-900 border border-gray-700 rounded px-2 py-1 text-sm text-white focus:outline-none focus:border-amber-500" />
+                        <button onClick={() => handleSaveEditedGoal(goal.id, { target_level: Number(document.getElementById(`edit-target-${goal.id}`).value) })}
+                          className="text-xs text-emerald-400 ml-auto">Save</button>
+                        <button onClick={() => setEditingGoal(null)}
+                          className="text-xs text-gray-500">Cancel</button>
+                      </div>
+                    ) : (
+                      <>
+                        <div className="flex justify-between items-center mb-1">
+                          <div className="flex items-center gap-2">
+                            <div className="flex flex-col">
+                              <button onClick={() => handleMoveGoal(index, -1)} className="text-gray-500 hover:text-white leading-none text-[10px]">▲</button>
+                              <button onClick={() => handleMoveGoal(index, 1)} className="text-gray-500 hover:text-white leading-none text-[10px]">▼</button>
+                            </div>
+                            <span className="text-sm font-medium text-white capitalize">
+                              {SKILL_ICONS[goal.skill]} {goal.skill} <span className="text-gray-400 font-normal">Lvl {editForm[goal.skill] ?? goal.current_level} / {goal.target_level}</span>
+                            </span>
+                          </div>
+                          <div className="flex gap-2">
+                            <button onClick={() => setEditingGoal(goal.id)}
+                              className="text-xs text-blue-400/80 hover:text-blue-300 transition-colors">✎ Edit</button>
+                            <button onClick={() => handleCompleteGoal(goal.id, goal.completed)}
+                              className="text-xs text-emerald-400 hover:text-emerald-300 transition-colors">✓ Done</button>
+                            <button onClick={() => handleDeleteGoal(goal.id)}
+                              className="text-xs text-red-400/60 hover:text-red-400 transition-colors">✕</button>
+                          </div>
                         </div>
-                        <span className="text-sm font-medium text-white capitalize">
-                          {SKILL_ICONS[goal.skill]} {goal.skill} <span className="text-gray-400 font-normal">Lvl {editForm[goal.skill] ?? goal.current_level} / {goal.target_level}</span>
-                        </span>
-                      </div>
-                      <div className="flex gap-2">
-                        <button onClick={() => handleCompleteGoal(goal.id, goal.completed)}
-                          className="text-xs text-emerald-400 hover:text-emerald-300 transition-colors">✓ Done</button>
-                        <button onClick={() => handleDeleteGoal(goal.id)}
-                          className="text-xs text-red-400/60 hover:text-red-400 transition-colors">✕</button>
-                      </div>
-                    </div>
-                    <ProgressBar start={goal.current_level} current={editForm[goal.skill] ?? goal.current_level} target={goal.target_level} />
+                        <ProgressBar start={goal.current_level} current={editForm[goal.skill] ?? goal.current_level} target={goal.target_level} />
+                      </>
+                    )}
                   </div>
                 ))}
                 

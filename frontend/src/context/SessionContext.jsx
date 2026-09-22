@@ -8,10 +8,20 @@ export function SessionProvider({ children }) {
   });
   
   const [sessionStart, setSessionStart] = useState(() => {
-    return Number(localStorage.getItem('osrs_session_start')) || 0;
+    const saved = Number(localStorage.getItem('osrs_session_start')) || 0;
+    // If it's been more than 12 hours, reset it
+    if (saved > 0 && Date.now() - saved > 12 * 60 * 60 * 1000) {
+      return 0;
+    }
+    return saved;
   });
 
   const [active, setActive] = useState(() => {
+    const savedStart = Number(localStorage.getItem('osrs_session_start')) || 0;
+    if (savedStart > 0 && Date.now() - savedStart > 12 * 60 * 60 * 1000) {
+      localStorage.setItem('osrs_session_active', 'false');
+      return false;
+    }
     return localStorage.getItem('osrs_session_active') === 'true';
   });
 

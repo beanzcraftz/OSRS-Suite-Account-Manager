@@ -229,14 +229,25 @@ async def reorder_goals(char_id: int, body: ReorderGoalsBody, session: AsyncSess
 
 
 
+class GoalUpdate(BaseModel):
+    skill: str | None = None
+    current_level: int | None = None
+    target_level: int | None = None
+    completed: bool | None = None
+
 @router.put('/{char_id}/goals/{goal_id}')
-async def update_goal(char_id: int, goal_id: int, completed: bool, session: AsyncSession = Depends(get_session)):
+async def update_goal(char_id: int, goal_id: int, body: GoalUpdate, session: AsyncSession = Depends(get_session)):
     goal = await session.get(CharacterGoal, goal_id)
     if not goal or goal.character_id != char_id:
         raise HTTPException(404, 'Goal not found')
-    goal.completed = completed
+    
+    if body.skill is not None: goal.skill = body.skill
+    if body.current_level is not None: goal.current_level = body.current_level
+    if body.target_level is not None: goal.target_level = body.target_level
+    if body.completed is not None: goal.completed = body.completed
+    
     await session.commit()
-    return {'id': goal.id, 'completed': goal.completed}
+    return {'id': goal.id, 'completed': goal.completed, 'target_level': goal.target_level}
 
 
 @router.delete('/{char_id}/goals/{goal_id}', status_code=204)

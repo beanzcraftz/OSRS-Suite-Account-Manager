@@ -165,6 +165,14 @@ export default function DashboardPage() {
                 <p className="text-gray-500 text-sm">No notes recorded yet.</p>
               </div>
             )}
+            
+            {(!recentNote || (new Date() - new Date(recentNote.created_at) > 12 * 60 * 60 * 1000)) && (
+              <div className="mt-4 bg-amber-500/10 border border-amber-500/30 rounded-lg p-3 animate-pulse">
+                <p className="text-amber-400 text-sm flex items-center gap-2">
+                  <span>⚠️</span> Don't forget to log your latest session notes in the Characters tab!
+                </p>
+              </div>
+            )}
           </div>
         </div>
 
@@ -178,7 +186,12 @@ export default function DashboardPage() {
               <div className="relative z-10">
                 <p className="text-xl font-bold text-white mb-2">{nextQuest.name}</p>
                 {nextQuest.missingLevels === 0 ? (
-                  <span className="bg-emerald-500/20 text-emerald-400 px-2 py-1 rounded text-xs font-bold uppercase tracking-wider">Ready to Start!</span>
+                  <a 
+                    href={`https://oldschool.runescape.wiki/w/${encodeURIComponent(nextQuest.name.replace(/ /g, '_'))}`} 
+                    target="_blank" rel="noopener noreferrer" 
+                    className="bg-emerald-500/20 hover:bg-emerald-500/30 transition-colors text-emerald-400 px-2 py-1 rounded text-xs font-bold uppercase tracking-wider inline-block cursor-pointer">
+                    Ready to Start!
+                  </a>
                 ) : (
                   <div>
                     <span className="text-red-400 text-sm font-medium">Missing {nextQuest.missingLevels} total levels</span>

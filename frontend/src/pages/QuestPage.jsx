@@ -41,6 +41,8 @@ export default function QuestPage() {
     fetchActiveChar();
   }, [activeCharacterId]);
 
+  const [savedQuest, setSavedQuest] = useState(null);
+
   const toggleQuest = async (questName) => {
     if (!activeChar) return;
     
@@ -57,6 +59,8 @@ export default function QuestPage() {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ quest_name: questName })
     });
+    setSavedQuest(questName);
+    setTimeout(() => setSavedQuest(q => q === questName ? null : q), 2000);
     fetchActiveChar(); // Sync just in case
   };
 
@@ -111,6 +115,9 @@ export default function QuestPage() {
             className="w-5 h-5 rounded border-gray-600 text-blue-500 focus:ring-blue-500 cursor-pointer"
           />
           <h3 className={`font-bold text-lg ${quest.isCompleted ? 'text-gray-400 line-through' : 'text-white'}`}>{quest.name}</h3>
+          {savedQuest === quest.name && (
+            <span className="text-emerald-400 font-bold text-xs animate-pulse">✓ Saved!</span>
+          )}
         </div>
         {!quest.isCompleted && (
           quest.ready ? (
