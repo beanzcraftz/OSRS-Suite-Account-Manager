@@ -52,30 +52,75 @@ export function ProgressBar({ start, current, target }) {
   );
 }
 
-function CharacterSlot({ slot, character, onSelect, isActive, onDelete }) {
+export const ACCOUNT_TYPES = [
+  { value: 'Main', label: 'Main', icon: '👑', badge: 'bg-amber-500/20 text-amber-300 border-amber-500/40' },
+  { value: 'Alt', label: 'Alt', icon: '🔄', badge: 'bg-blue-500/20 text-blue-300 border-blue-500/40' },
+  { value: 'Ironman', label: 'Ironman', icon: '🛡️', badge: 'bg-slate-400/20 text-slate-300 border-slate-400/40' },
+  { value: 'Hardcore Iron', label: 'Hardcore', icon: '💀', badge: 'bg-red-500/20 text-red-300 border-red-500/40' },
+  { value: 'Ultimate Iron', label: 'Ultimate', icon: '🎒', badge: 'bg-zinc-300/20 text-zinc-100 border-zinc-300/40' },
+  { value: 'Group Iron', label: 'Group Iron', icon: '🤝', badge: 'bg-cyan-500/20 text-cyan-300 border-cyan-500/40' },
+  { value: 'Pure', label: 'Pure', icon: '⚔️', badge: 'bg-purple-500/20 text-purple-300 border-purple-500/40' },
+  { value: 'Skiller', label: 'Skiller', icon: '🔨', badge: 'bg-emerald-500/20 text-emerald-300 border-emerald-500/40' },
+];
+
+export function getAccountTypeMeta(type) {
+  return ACCOUNT_TYPES.find(t => t.value === type) || ACCOUNT_TYPES[0];
+}
+
+function CharacterSlot({ slot, character, onSelect, isActive, onEditAccount, onDeleteClick }) {
   if (!character) {
     return (
       <button onClick={() => onSelect(slot)}
-        className="border-2 border-dashed border-gray-700 rounded-xl p-6 flex flex-col items-center justify-center gap-2 hover:border-amber-500/50 hover:bg-gray-800/30 transition-all min-h-[140px]">
+        className="border-2 border-dashed border-gray-700 rounded-xl p-6 flex flex-col items-center justify-center gap-2 hover:border-amber-500/50 hover:bg-gray-800/30 transition-all min-h-[160px]">
         <span className="text-3xl">➕</span>
-        <span className="text-gray-500 text-sm">Slot {slot}</span>
-        <span className="text-xs text-gray-600">Click to create</span>
+        <span className="text-gray-400 text-sm font-medium">Slot {slot}</span>
+        <span className="text-xs text-gray-500">Click to create</span>
       </button>
     );
   }
+
+  const typeMeta = getAccountTypeMeta(character.account_type);
+
   return (
     <div onClick={() => onSelect(character.id)}
-      className={`rounded-xl p-5 cursor-pointer transition-all border ${isActive ? 'border-amber-500/60 bg-amber-500/5 shadow-[0_0_20px_rgba(245,158,11,0.1)]' : 'border-gray-800 bg-gray-900/50 hover:bg-gray-800/50'}`}>
-      <div className="flex justify-between items-start mb-3">
-        <div>
-          <h3 className="font-bold text-white">{character.name}</h3>
-          <p className="text-xs text-gray-400">Combat {character.combat_level} · {character.total_level} total</p>
+      className={`rounded-xl p-5 cursor-pointer transition-all border flex flex-col justify-between min-h-[160px] ${
+        isActive
+          ? 'border-amber-500/60 bg-amber-500/5 shadow-[0_0_20px_rgba(245,158,11,0.1)]'
+          : 'border-gray-800 bg-gray-900/50 hover:bg-gray-800/50'
+      }`}>
+      <div>
+        <div className="flex justify-between items-start mb-2 gap-2">
+          <div className="min-w-0 flex-1">
+            <div className="flex items-center gap-2 flex-wrap mb-1">
+              <h3 className="font-bold text-white truncate text-base">{character.name}</h3>
+              <span className={`text-[11px] px-2 py-0.5 rounded-full border flex items-center gap-1 font-medium ${typeMeta.badge}`}>
+                <span>{typeMeta.icon}</span>
+                <span>{typeMeta.label}</span>
+              </span>
+            </div>
+            <p className="text-xs text-gray-400">Combat {character.combat_level} · {character.total_level} total</p>
+          </div>
+          {isActive && (
+            <span className="text-xs bg-amber-500/20 text-amber-400 px-2 py-0.5 rounded-full border border-amber-500/30 shrink-0 font-medium">
+              Active
+            </span>
+          )}
         </div>
-        {isActive && <span className="text-xs bg-amber-500/20 text-amber-400 px-2 py-0.5 rounded-full border border-amber-500/30">Active</span>}
+        <p className="text-sm text-emerald-400 font-medium">{new Intl.NumberFormat().format(character.current_gp ?? 0)} GP</p>
       </div>
-      <p className="text-sm text-emerald-400 font-medium">{new Intl.NumberFormat().format(character.current_gp ?? 0)} GP</p>
-      <button onClick={(e) => { e.stopPropagation(); onDelete(character.id); }}
-        className="mt-3 text-xs text-red-400/60 hover:text-red-400 transition-colors">Delete</button>
+
+      <div className="flex items-center justify-between mt-4 pt-3 border-t border-gray-800/80 text-xs">
+        <button
+          onClick={(e) => { e.stopPropagation(); onEditAccount(character); }}
+          className="text-amber-400 hover:text-amber-300 font-medium flex items-center gap-1 transition-colors px-2 py-1 rounded hover:bg-amber-500/10">
+          ✎ Edit Account
+        </button>
+        <button
+          onClick={(e) => { e.stopPropagation(); onDeleteClick(character); }}
+          className="text-red-400/80 hover:text-red-400 flex items-center gap-1 transition-colors px-2 py-1 rounded hover:bg-red-500/10">
+          🗑️ Remove
+        </button>
+      </div>
     </div>
   );
 }
@@ -91,6 +136,10 @@ export default function CharacterPage() {
   const [editingGoal, setEditingGoal] = useState(null);
   const [createSlot, setCreateSlot] = useState(null);
   const [newName, setNewName] = useState('');
+  const [createAccountType, setCreateAccountType] = useState('Main');
+  const [editAccountModalChar, setEditAccountModalChar] = useState(null);
+  const [editAccountForm, setEditAccountForm] = useState({ name: '', account_type: 'Main' });
+  const [deleteConfirmChar, setDeleteConfirmChar] = useState(null);
 
   // When characters load, select active one
   useEffect(() => {
@@ -117,6 +166,7 @@ export default function CharacterPage() {
       // Creating new
       setCreateSlot(slotOrId);
       setNewName('');
+      setCreateAccountType('Main');
     }
   };
 
@@ -129,7 +179,11 @@ export default function CharacterPage() {
       const res = await fetch('/api/characters', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ name: newName.trim(), slot: createSlot }),
+        body: JSON.stringify({
+          name: newName.trim(),
+          slot: createSlot,
+          account_type: createAccountType,
+        }),
       });
       if (!res.ok) {
         const err = await res.json().catch(() => ({ detail: `Error ${res.status}` }));
@@ -140,6 +194,7 @@ export default function CharacterPage() {
       // Close modal first
       setCreateSlot(null);
       setCreateError('');
+      setCreateAccountType('Main');
       // Refresh list then immediately load the new character
       await refreshCharacters();
       setActiveCharacterId(newChar.id);
@@ -149,14 +204,66 @@ export default function CharacterPage() {
     }
   };
 
-
   const handleDelete = async (id) => {
-    if (!confirm('Delete this character? This cannot be undone.')) return;
-    await fetch(`/api/characters/${id}`, { method: 'DELETE' });
-    setSelectedChar(null);
-    setEditForm({});
-    if (activeCharacterId === id) setActiveCharacterId(null);
-    await refreshCharacters();
+    try {
+      const res = await fetch(`/api/characters/${id}`, { method: 'DELETE' });
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({ detail: `Error ${res.status}` }));
+        alert(`Failed to delete character: ${err.detail ?? 'Unknown error'}`);
+        return;
+      }
+      const remaining = characters.filter(c => c.id !== id);
+      if (activeCharacterId === id) {
+        setActiveCharacterId(remaining[0]?.id ?? null);
+      }
+      if (selectedChar?.id === id) {
+        if (remaining.length > 0) {
+          await fetchCharacterDetail(remaining[0].id);
+        } else {
+          setSelectedChar(null);
+          setEditForm({});
+        }
+      }
+      await refreshCharacters();
+      setDeleteConfirmChar(null);
+      setEditAccountModalChar(null);
+    } catch (e) {
+      alert(`Network error: ${e.message}`);
+    }
+  };
+
+  const handleOpenEditAccount = (char) => {
+    setEditAccountModalChar(char);
+    setEditAccountForm({
+      name: char.name,
+      account_type: char.account_type || 'Main',
+    });
+  };
+
+  const handleSaveAccountModal = async () => {
+    if (!editAccountModalChar || !editAccountForm.name.trim()) return;
+    try {
+      const res = await fetch(`/api/characters/${editAccountModalChar.id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          name: editAccountForm.name.trim(),
+          account_type: editAccountForm.account_type,
+        }),
+      });
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({ detail: `Error ${res.status}` }));
+        alert(`Failed to save: ${err.detail ?? 'Unknown error'}`);
+        return;
+      }
+      await refreshCharacters();
+      if (selectedChar?.id === editAccountModalChar.id) {
+        await fetchCharacterDetail(editAccountModalChar.id);
+      }
+      setEditAccountModalChar(null);
+    } catch (e) {
+      alert(`Network error: ${e.message}`);
+    }
   };
 
   const handleSave = async () => {
@@ -164,7 +271,7 @@ export default function CharacterPage() {
     setSaving(true);
     try {
       const body = {};
-      ['name','combat_level','total_level','current_gp',...SKILLS].forEach(k => {
+      ['name', 'account_type', 'combat_level', 'total_level', 'current_gp', ...SKILLS].forEach(k => {
         if (editForm[k] !== undefined) body[k] = editForm[k];
       });
       const res = await fetch(`/api/characters/${selectedChar.id}`, {
@@ -257,7 +364,7 @@ export default function CharacterPage() {
   };
 
   const hasChanges = selectedChar ? (
-    ['name', 'combat_level', 'total_level', 'current_gp'].some(k => editForm[k] !== selectedChar[k]) ||
+    ['name', 'account_type', 'combat_level', 'total_level', 'current_gp'].some(k => editForm[k] !== selectedChar[k]) ||
     SKILLS.some(skill => editForm[skill] !== selectedChar.skills?.[skill])
   ) : false;
 
@@ -273,17 +380,33 @@ export default function CharacterPage() {
 
       {/* Create modal */}
       {createSlot && (
-        <div className="fixed inset-0 bg-black/60 backdrop-blur flex items-center justify-center z-50">
-          <div className="bg-gray-900 border border-gray-700 rounded-xl p-6 w-80">
-            <h3 className="font-bold text-white mb-4">Create Character (Slot {createSlot})</h3>
-            <input
-              autoFocus
-              value={newName}
-              onChange={e => setNewName(e.target.value)}
-              onKeyDown={e => e.key === 'Enter' && handleCreate()}
-              placeholder="Character name"
-              className="w-full bg-gray-950 border border-gray-700 rounded-lg px-3 py-2 text-white mb-3 focus:outline-none focus:border-amber-500"
-            />
+        <div className="fixed inset-0 bg-black/60 backdrop-blur flex items-center justify-center z-50 p-4">
+          <div className="bg-gray-900 border border-gray-700 rounded-xl p-6 w-full max-w-sm shadow-2xl">
+            <h3 className="font-bold text-white mb-4 text-lg">Create Character (Slot {createSlot})</h3>
+            <div className="space-y-4 mb-4">
+              <div>
+                <label className="text-xs text-gray-400 block mb-1">Character Name</label>
+                <input
+                  autoFocus
+                  value={newName}
+                  onChange={e => setNewName(e.target.value)}
+                  onKeyDown={e => e.key === 'Enter' && handleCreate()}
+                  placeholder="e.g. BeanzCraftz"
+                  className="w-full bg-gray-950 border border-gray-700 rounded-lg px-3 py-2 text-white focus:outline-none focus:border-amber-500 text-sm"
+                />
+              </div>
+              <div>
+                <label className="text-xs text-gray-400 block mb-1">Account Type</label>
+                <select
+                  value={createAccountType}
+                  onChange={e => setCreateAccountType(e.target.value)}
+                  className="w-full bg-gray-950 border border-gray-700 rounded-lg px-3 py-2 text-white text-sm focus:outline-none focus:border-amber-500">
+                  {ACCOUNT_TYPES.map(t => (
+                    <option key={t.value} value={t.value}>{t.icon} {t.label}</option>
+                  ))}
+                </select>
+              </div>
+            </div>
             {createError && (
               <p className="text-red-400 text-xs mb-3 bg-red-500/10 border border-red-500/30 px-3 py-2 rounded-lg">
                 ⚠ {createError}
@@ -297,15 +420,145 @@ export default function CharacterPage() {
         </div>
       )}
 
+      {/* Edit Account Modal */}
+      {editAccountModalChar && (
+        <div className="fixed inset-0 bg-black/60 backdrop-blur flex items-center justify-center z-50 p-4">
+          <div className="bg-gray-900 border border-gray-700 rounded-xl p-6 w-full max-w-md shadow-2xl">
+            <div className="flex justify-between items-center mb-4 pb-2 border-b border-gray-800">
+              <h3 className="font-bold text-white text-lg flex items-center gap-2">
+                <span>✎</span> Edit Account (Slot {editAccountModalChar.slot})
+              </h3>
+              <button
+                onClick={() => setEditAccountModalChar(null)}
+                className="text-gray-400 hover:text-white text-sm">
+                ✕
+              </button>
+            </div>
+
+            <div className="space-y-4 mb-6">
+              <div>
+                <label className="text-xs text-gray-400 block mb-1 font-medium">Account Name</label>
+                <input
+                  autoFocus
+                  type="text"
+                  value={editAccountForm.name}
+                  onChange={e => setEditAccountForm(f => ({ ...f, name: e.target.value }))}
+                  placeholder="e.g. BeanzCraftz"
+                  className="w-full bg-gray-950 border border-gray-700 rounded-lg px-3 py-2 text-white focus:outline-none focus:border-amber-500 text-sm"
+                />
+                <p className="text-[11px] text-gray-500 mt-1">Change or correct the display name for this character slot.</p>
+              </div>
+
+              <div>
+                <label className="text-xs text-gray-400 block mb-1 font-medium">Account Type</label>
+                <div className="grid grid-cols-2 gap-2">
+                  {ACCOUNT_TYPES.map(t => {
+                    const isSelected = editAccountForm.account_type === t.value;
+                    return (
+                      <button
+                        key={t.value}
+                        type="button"
+                        onClick={() => setEditAccountForm(f => ({ ...f, account_type: t.value }))}
+                        className={`flex items-center gap-2 px-3 py-2 rounded-lg text-xs font-medium border text-left transition-all ${
+                          isSelected
+                            ? `${t.badge} ring-1 ring-amber-400/50 shadow-sm`
+                            : 'bg-gray-950 border-gray-800 text-gray-400 hover:border-gray-700 hover:text-white'
+                        }`}>
+                        <span className="text-sm">{t.icon}</span>
+                        <span>{t.label}</span>
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+
+              {activeCharacterId !== editAccountModalChar.id && (
+                <div className="pt-2">
+                  <button
+                    type="button"
+                    onClick={() => setActiveCharacterId(editAccountModalChar.id)}
+                    className="w-full py-2 bg-amber-500/10 hover:bg-amber-500/20 text-amber-400 border border-amber-500/30 rounded-lg text-xs font-medium transition-colors">
+                    ★ Set as Active Character
+                  </button>
+                </div>
+              )}
+            </div>
+
+            <div className="flex items-center justify-between pt-4 border-t border-gray-800">
+              <button
+                type="button"
+                onClick={() => {
+                  const target = editAccountModalChar;
+                  setEditAccountModalChar(null);
+                  setDeleteConfirmChar(target);
+                }}
+                className="text-red-400 hover:text-red-300 text-xs flex items-center gap-1 font-medium transition-colors">
+                🗑️ Delete Account...
+              </button>
+              <div className="flex gap-2">
+                <button
+                  type="button"
+                  onClick={() => setEditAccountModalChar(null)}
+                  className="px-3 py-1.5 bg-gray-800 hover:bg-gray-700 text-gray-300 rounded-lg text-xs transition-colors">
+                  Cancel
+                </button>
+                <button
+                  type="button"
+                  onClick={handleSaveAccountModal}
+                  disabled={!editAccountForm.name.trim()}
+                  className="px-4 py-1.5 bg-amber-500 hover:bg-amber-400 disabled:opacity-50 text-black font-semibold rounded-lg text-xs transition-colors">
+                  Save Account
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Delete Confirmation Modal */}
+      {deleteConfirmChar && (
+        <div className="fixed inset-0 bg-black/75 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+          <div className="bg-gray-900 border border-red-500/40 rounded-xl p-6 max-w-md w-full shadow-2xl">
+            <div className="flex items-center gap-3 mb-4">
+              <span className="text-3xl">⚠️</span>
+              <div>
+                <h3 className="font-bold text-white text-lg">Remove Character</h3>
+                <p className="text-xs text-gray-400">Slot {deleteConfirmChar.slot} · {deleteConfirmChar.name}</p>
+              </div>
+            </div>
+            <p className="text-gray-300 text-sm mb-3">
+              Are you sure you want to delete <strong className="text-amber-400">{deleteConfirmChar.name}</strong>?
+            </p>
+            <p className="text-red-400 text-xs mb-6 bg-red-500/10 border border-red-500/20 p-3 rounded-lg leading-relaxed">
+              This will permanently delete this character and all its recorded stats, active goals, session logs, and completed quest progress. This action cannot be undone.
+            </p>
+            <div className="flex gap-3 justify-end">
+              <button
+                type="button"
+                onClick={() => setDeleteConfirmChar(null)}
+                className="px-4 py-2 bg-gray-800 hover:bg-gray-700 text-gray-300 rounded-lg text-sm transition-colors">
+                Cancel
+              </button>
+              <button
+                type="button"
+                onClick={() => handleDelete(deleteConfirmChar.id)}
+                className="px-4 py-2 bg-red-600 hover:bg-red-500 text-white font-semibold rounded-lg text-sm transition-colors shadow-lg shadow-red-600/30">
+                Yes, Delete Character
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Character slots */}
-      <div className="grid grid-cols-3 gap-4 mb-8">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
         {slots.map(slot => {
           const char = characters.find(c => c.slot === slot);
           return (
             <CharacterSlot key={slot} slot={slot} character={char}
               onSelect={handleSlotClick} isActive={char?.id === activeCharacterId}
-              onDelete={handleDelete} />
+              onEditAccount={handleOpenEditAccount}
+              onDeleteClick={(c) => setDeleteConfirmChar(c)} />
           );
         })}
       </div>
@@ -315,8 +568,13 @@ export default function CharacterPage() {
         <div className="grid grid-cols-1 xl:grid-cols-3 gap-6">
           {/* Stats form */}
           <div className="xl:col-span-2 bg-gray-900/80 border border-gray-800 rounded-xl p-6">
-            <div className="flex justify-between items-center mb-5">
-              <h2 className="font-bold text-white text-lg">📊 Stats — {selectedChar.name}</h2>
+            <div className="flex justify-between items-center mb-5 flex-wrap gap-2">
+              <div className="flex items-center gap-2.5">
+                <h2 className="font-bold text-white text-lg">📊 Stats — {selectedChar.name}</h2>
+                <span className={`text-xs px-2.5 py-0.5 rounded-full border font-medium ${getAccountTypeMeta(editForm.account_type || selectedChar.account_type).badge}`}>
+                  {getAccountTypeMeta(editForm.account_type || selectedChar.account_type).icon} {editForm.account_type || selectedChar.account_type || 'Main'}
+                </span>
+              </div>
               <button onClick={handleSave} disabled={saving || (!hasChanges && !saving && !saved)}
                 className={`text-black font-semibold px-4 py-1.5 rounded-lg text-sm transition-colors ${
                   saved ? 'bg-emerald-500' :
@@ -326,24 +584,56 @@ export default function CharacterPage() {
               </button>
             </div>
 
-            {/* Name / combat / GP */}
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-5">
-              {[
-                { key: 'name', label: 'Name', type: 'text' },
-                { key: 'combat_level', label: 'Combat Lvl', type: 'number' },
-                { key: 'total_level', label: 'Total Lvl', type: 'number' },
-                { key: 'current_gp', label: 'Cash Stack (GP)', type: 'number' },
-              ].map(({ key, label, type }) => (
-                <div key={key}>
-                  <label className="text-xs text-gray-400 block mb-1">{label}</label>
-                  <input
-                    type={type}
-                    value={editForm[key] ?? ''}
-                    onChange={e => setEditForm(f => ({ ...f, [key]: type === 'number' ? Number(e.target.value) : e.target.value }))}
-                    className="w-full bg-gray-950 border border-gray-700 rounded-lg px-2 py-1.5 text-white text-sm focus:outline-none focus:border-amber-500"
-                  />
-                </div>
-              ))}
+            {/* Name / Account Type / combat / total / GP */}
+            <div className="grid grid-cols-2 md:grid-cols-5 gap-3 mb-5">
+              <div>
+                <label className="text-xs text-gray-400 block mb-1">Name</label>
+                <input
+                  type="text"
+                  value={editForm.name ?? ''}
+                  onChange={e => setEditForm(f => ({ ...f, name: e.target.value }))}
+                  className="w-full bg-gray-950 border border-gray-700 rounded-lg px-2 py-1.5 text-white text-sm focus:outline-none focus:border-amber-500"
+                />
+              </div>
+              <div>
+                <label className="text-xs text-gray-400 block mb-1">Account Type</label>
+                <select
+                  value={editForm.account_type ?? 'Main'}
+                  onChange={e => setEditForm(f => ({ ...f, account_type: e.target.value }))}
+                  className="w-full bg-gray-950 border border-gray-700 rounded-lg px-2 py-1.5 text-white text-sm focus:outline-none focus:border-amber-500">
+                  {ACCOUNT_TYPES.map(t => (
+                    <option key={t.value} value={t.value}>{t.icon} {t.label}</option>
+                  ))}
+                </select>
+              </div>
+              <div>
+                <label className="text-xs text-gray-400 block mb-1">Combat Lvl</label>
+                <input
+                  type="number"
+                  step="any"
+                  value={editForm.combat_level ?? ''}
+                  onChange={e => setEditForm(f => ({ ...f, combat_level: Number(e.target.value) }))}
+                  className="w-full bg-gray-950 border border-gray-700 rounded-lg px-2 py-1.5 text-white text-sm focus:outline-none focus:border-amber-500"
+                />
+              </div>
+              <div>
+                <label className="text-xs text-gray-400 block mb-1">Total Lvl</label>
+                <input
+                  type="number"
+                  value={editForm.total_level ?? ''}
+                  onChange={e => setEditForm(f => ({ ...f, total_level: Number(e.target.value) }))}
+                  className="w-full bg-gray-950 border border-gray-700 rounded-lg px-2 py-1.5 text-white text-sm focus:outline-none focus:border-amber-500"
+                />
+              </div>
+              <div>
+                <label className="text-xs text-gray-400 block mb-1">Cash Stack (GP)</label>
+                <input
+                  type="number"
+                  value={editForm.current_gp ?? ''}
+                  onChange={e => setEditForm(f => ({ ...f, current_gp: Number(e.target.value) }))}
+                  className="w-full bg-gray-950 border border-gray-700 rounded-lg px-2 py-1.5 text-white text-sm focus:outline-none focus:border-amber-500"
+                />
+              </div>
             </div>
 
             {/* Skill grid */}

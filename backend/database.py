@@ -46,6 +46,7 @@ class Character(Base):
     id = Column(Integer, primary_key=True, autoincrement=True)
     slot = Column(Integer, unique=True, nullable=False)  # 1, 2, or 3
     name = Column(String, nullable=False, default='New Character')
+    account_type = Column(String, default='Main')  # Main, Alt, Ironman, Hardcore Iron, Ultimate Iron, Group Iron, Pure, Skiller
     combat_level = Column(Float, default=3.0)
     total_level = Column(Integer, default=32)
     current_gp = Column(BigInteger, default=0)
@@ -126,6 +127,14 @@ async def init_db():
             await conn.execute(
                 __import__('sqlalchemy').text(
                     'ALTER TABLE character_goals ADD COLUMN order_index INTEGER DEFAULT 0'
+                )
+            )
+        except Exception:
+            pass
+        try:
+            await conn.execute(
+                __import__('sqlalchemy').text(
+                    "ALTER TABLE characters ADD COLUMN account_type VARCHAR DEFAULT 'Main'"
                 )
             )
         except Exception:

@@ -79,8 +79,13 @@ export default function Sidebar() {
         {activeCharacter ? (
           <div className="bg-gray-900 rounded-lg px-3 py-2">
             <p className="text-xs text-gray-500 mb-0.5">Active Character</p>
-            <p className="text-sm font-semibold text-white truncate">{activeCharacter.name}</p>
-            <p className="text-xs text-gray-400">
+            <div className="flex items-center justify-between gap-1">
+              <p className="text-sm font-semibold text-white truncate">{activeCharacter.name}</p>
+              <span className="text-[10px] px-1.5 py-0.5 rounded bg-amber-500/15 text-amber-400 border border-amber-500/30 font-medium shrink-0">
+                {activeCharacter.account_type || 'Main'}
+              </span>
+            </div>
+            <p className="text-xs text-gray-400 mt-0.5">
               Lvl {activeCharacter.combat_level} · {activeCharacter.total_level} total
             </p>
           </div>

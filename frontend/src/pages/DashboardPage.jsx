@@ -89,7 +89,14 @@ export default function DashboardPage() {
           <h1 className="text-3xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-amber-400 to-amber-600">
             Command Center
           </h1>
-          <p className="text-gray-400 mt-1">Welcome back, {activeChar.name}</p>
+          <div className="flex items-center gap-2 mt-1">
+            <p className="text-gray-400">Welcome back, <span className="text-white font-medium">{activeChar.name}</span></p>
+            {activeChar.account_type && (
+              <span className="text-[11px] px-2 py-0.5 rounded-full bg-amber-500/15 text-amber-400 border border-amber-500/30 font-medium">
+                {activeChar.account_type}
+              </span>
+            )}
+          </div>
         </div>
         
         {/* Session Tracking */}

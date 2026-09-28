@@ -12,10 +12,12 @@ router = APIRouter(prefix='/api/characters', tags=['characters'], redirect_slash
 class CharacterCreate(BaseModel):
     name: str = 'New Character'
     slot: int  # 1, 2, or 3
+    account_type: str = 'Main'
 
 
 class CharacterUpdate(BaseModel):
     name: str | None = None
+    account_type: str | None = None
     combat_level: float | None = None
     total_level: int | None = None
     current_gp: int | None = None
@@ -60,6 +62,7 @@ def char_to_dict(c: Character) -> dict:
         'id': c.id,
         'slot': c.slot,
         'name': c.name,
+        'account_type': getattr(c, 'account_type', 'Main') or 'Main',
         'combat_level': c.combat_level,
         'total_level': c.total_level,
         'current_gp': c.current_gp,
@@ -87,7 +90,7 @@ async def create_character(body: CharacterCreate, session: AsyncSession = Depend
     count = await session.execute(select(Character))
     if len(count.scalars().all()) >= 3:
         raise HTTPException(400, 'Maximum of 3 characters allowed')
-    char = Character(name=body.name, slot=body.slot)
+    char = Character(name=body.name, slot=body.slot, account_type=body.account_type)
     session.add(char)
     await session.commit()
     await session.refresh(char)
@@ -188,6 +191,9 @@ async def delete_character(char_id: int, session: AsyncSession = Depends(get_ses
     notes = await session.execute(select(CharacterNote).where(CharacterNote.character_id == char_id))
     for n in notes.scalars().all():
         await session.delete(n)
+    quests = await session.execute(select(CharacterQuest).where(CharacterQuest.character_id == char_id))
+    for q in quests.scalars().all():
+        await session.delete(q)
     await session.delete(char)
     await session.commit()
 
